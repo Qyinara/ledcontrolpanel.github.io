@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LED Kontrol Paneli</title>
+    <style>
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 40px;
+        }
+
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+
+        .card {
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+            width: 300px;
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h3 {
+            margin-bottom: 20px;
+            color: #666;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin-bottom: 20px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider-switch {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 34px;
+        }
+
+        .slider-switch:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider-switch {
+            background-color: var(--led-color);
+        }
+
+        input:checked + .slider-switch:before {
+            transform: translateX(26px);
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 5px;
+            background: #ddd;
+            outline: none;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            transition: background 0.2s;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--led-color);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+
+        .led-red {
+            --led-color: #ff4d4d;
+        }
+
+        .led-blue {
+            --led-color: #4da6ff;
+        }
+
+        .led-white {
+            --led-color: #f0f0f0;
+        }
+
+        @media screen and (max-width: 768px) {
+            .dashboard {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .card {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>LED Kontrol Paneli</h1>
+    <div class="dashboard">
+        <div class="card led-red">
+            <h3>LED 1 (Kırmızı)</h3>
+            <label class="switch">
+                <input type="checkbox" id="led1-toggle" onchange="toggleLED(1)">
+                <span class="slider-switch"></span>
+            </label>
+            <input type="range" min="0" max="1023" value="1023" class="slider" id="brightness1" oninput="adjustBrightness(1)">
+        </div>
+        <div class="card led-blue">
+            <h3>LED 2 (Mavi)</h3>
+            <label class="switch">
+                <input type="checkbox" id="led2-toggle" onchange="toggleLED(2)">
+                <span class="slider-switch"></span>
+            </label>
+            <input type="range" min="0" max="1023" value="1023" class="slider" id="brightness2" oninput="adjustBrightness(2)">
+        </div>
+
+        <div class="card led-white">
+            <h3>LED 3 (Beyaz)</h3>
+            <label class="switch">
+                <input type="checkbox" id="led3-toggle" onchange="toggleLED(3)">
+                <span class="slider-switch"></span>
+            </label>
+            <input type="range" min="0" max="1023" value="1023" class="slider" id="brightness3" oninput="adjustBrightness(3)">
+        </div>
+    </div>
+    <script>
+        function toggleLED(led) {
+            var state = document.getElementById('led' + led + '-toggle').checked ? 1 : 0;
+            var brightness = document.getElementById('brightness' + led).value;
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/led?led=" + led + "&state=" + state + "&brightness=" + brightness, true);
+            xhr.send();
+        }
+
+        function adjustBrightness(led) {
+            toggleLED(led);
+        }
+
+        function updateStatus() {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/status", true);
+            xhr.onload = function () {
+                var data = JSON.parse(xhr.responseText);
+                document.getElementById("led1-toggle").checked = data.led1;
+                document.getElementById("led2-toggle").checked = data.led2;
+                document.getElementById("led3-toggle").checked = data.led3;
+                document.getElementById("brightness1").value = data.brightness1;
+                document.getElementById("brightness2").value = data.brightness2;
+                document.getElementById("brightness3").value = data.brightness3;
+            };
+            xhr.send();
+        }
+
+        setInterval(updateStatus, 1000);
+    </script>
+</body>
+</html>
